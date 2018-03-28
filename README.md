@@ -1,5 +1,5 @@
 # Qt5.10-iOS9
-Qt 5.10 decided to drop support for 32-bit devices and iOS 9 too early, in my opinion. This set of patches allows compiling Qt 5.10.1 from sources with 32-bit (armv7 / i386) and iOS 9 enabled.
+Qt 5.10 decided to drop support for 32-bit devices and iOS 9 too early, in my opinion. This set of patches allows compiling Qt 5.10.1 from sources with 32-bit (armv7 / i386) and iOS 9 enabled with Xcode 9.2.
 
 ### Steps:
 
