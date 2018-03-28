@@ -1,0 +1,14 @@
+diff --git a/qtbase/src/plugins/platforms/ios/qiosservices.mm b/qtbase/src/plugins/platforms/ios/qiosservices.mm
+index 3c44e1d..9330738 100644
+--- a/qtbase/src/plugins/platforms/ios/qiosservices.mm
++++ b/qtbase/src/plugins/platforms/ios/qiosservices.mm
+@@ -60,8 +60,7 @@
+     if (![application canOpenURL:nsUrl])
+         return false;
+ 
+-    [application openURL:nsUrl options:@{} completionHandler:nil];
+-    return true;
++    return [application openURL:nsUrl];
+ }
+ 
+ bool QIOSServices::openDocument(const QUrl &url)

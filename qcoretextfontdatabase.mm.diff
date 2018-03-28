@@ -1,0 +1,13 @@
+diff --git a/qtbase/src/platformsupport/fontdatabases/mac/qcoretextfontdatabase.mm b/qtbase/src/platformsupport/fontdatabases/mac/qcoretextfontdatabase.mm
+index 722a53a..e0be558 100644
+--- a/qtbase/src/platformsupport/fontdatabases/mac/qcoretextfontdatabase.mm
++++ b/qtbase/src/platformsupport/fontdatabases/mac/qcoretextfontdatabase.mm
+@@ -187,7 +187,7 @@ antialiasing with different hinting styles (but we don't care about the
+ static CFArrayRef availableFamilyNames()
+ {
+ #if QT_DARWIN_PLATFORM_SDK_EQUAL_OR_ABOVE(1060, 100000, 100000, 30000)
+-    if (&CTFontManagerCopyAvailableFontFamilyNames)
++    if (__builtin_available(iOS 10, *))
+         return CTFontManagerCopyAvailableFontFamilyNames();
+ #endif
+ #if defined(QT_PLATFORM_UIKIT)

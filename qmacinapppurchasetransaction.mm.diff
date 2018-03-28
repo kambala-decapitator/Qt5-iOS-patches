@@ -1,0 +1,53 @@
+diff --git a/qtpurchasing/src/purchasing/inapppurchase/mac/qmacinapppurchasetransaction.mm b/qtpurchasing/src/purchasing/inapppurchase/mac/qmacinapppurchasetransaction.mm
+index 9f28c87..ef6ce01 100644
+--- a/qtpurchasing/src/purchasing/inapppurchase/mac/qmacinapppurchasetransaction.mm
++++ b/qtpurchasing/src/purchasing/inapppurchase/mac/qmacinapppurchasetransaction.mm
+@@ -43,6 +43,27 @@
+ {
+     if (status == PurchaseFailed) {
+         m_failureReason = ErrorOccurred;
++#if QT_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(90300) || QT_TVOS_PLATFORM_SDK_EQUAL_OR_ABOVE(90200)
++        if (__builtin_available(iOS 9.3, *)) {
++            if (m_nativeTransaction.error.code == SKErrorCloudServicePermissionDenied) {
++                m_errorString = QStringLiteral("Cloud Service Permission Denied");
++                return;
++            }
++            else if (m_nativeTransaction.error.code == SKErrorCloudServiceNetworkConnectionFailed) {
++                m_errorString = QStringLiteral("Cloud Service Network Connection Failed");
++                return;
++            }
++        }
++#endif
++                                               // rdar://35589806
++#if QT_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100300) // || QT_TVOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100200)
++        if (__builtin_available(iOS 10.3, *)) {
++            if (m_nativeTransaction.error.code == SKErrorCloudServiceRevoked) {
++                m_errorString = QStringLiteral("Cloud Service Revoked");
++                return;
++            }
++        }
++#endif
+         switch (m_nativeTransaction.error.code) {
+         case SKErrorClientInvalid:
+             m_errorString = QStringLiteral("Client Invalid");
+@@ -61,20 +82,6 @@
+         case SKErrorStoreProductNotAvailable:
+             m_errorString = QStringLiteral("Store Product Not Available");
+             break;
+-#if QT_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(90300) || QT_TVOS_PLATFORM_SDK_EQUAL_OR_ABOVE(90200)
+-        case SKErrorCloudServicePermissionDenied:
+-            m_errorString = QStringLiteral("Cloud Service Permission Denied");
+-            break;
+-        case SKErrorCloudServiceNetworkConnectionFailed:
+-            m_errorString = QStringLiteral("Cloud Service Network Connection Failed");
+-            break;
+-#endif
+-                                               // rdar://35589806
+-#if QT_IOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100300) // || QT_TVOS_PLATFORM_SDK_EQUAL_OR_ABOVE(100200)
+-        case SKErrorCloudServiceRevoked:
+-            m_errorString = QStringLiteral("Cloud Service Revoked");
+-            break;
+-#endif
+ #endif
+         case SKErrorUnknown:
+         default:
