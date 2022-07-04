@@ -1,0 +1,14 @@
+diff --git a/qtbase/mkspecs/features/android/default_pre.prf b/qtbase/mkspecs/features/android/default_pre.prf
+index 9f90dcb..8662967 100644
+--- a/qtbase/mkspecs/features/android/default_pre.prf
++++ b/qtbase/mkspecs/features/android/default_pre.prf
+@@ -13,7 +13,8 @@ build_pass:armeabi-v7a {
+     CONFIG += single_android_abi $$QT_ARCH
+ } else {
+     # default architecture
+-    QT_ARCH = arm64-v8a
++    contains(ALL_ANDROID_ABIS, arm64-v8a): QT_ARCH = arm64-v8a
++    else: QT_ARCH = armeabi-v7a
+ }
+ 
+ DEFAULT_ANDROID_TARGET_ARCH=$${QT_ARCH}
