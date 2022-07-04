@@ -1,0 +1,84 @@
+diff --git a/qtbase/mkspecs/features/uikit/qt.prf b/qtbase/mkspecs/features/uikit/qt.prf
+index 4475c137dc..353a92e710 100644
+--- a/qtbase/mkspecs/features/uikit/qt.prf
++++ b/qtbase/mkspecs/features/uikit/qt.prf
+@@ -5,7 +5,7 @@ qt_depends = $$resolve_depends(QT, "QT.")
+ 
+     lib_name = qios
+     lib_path_and_base = $$[QT_INSTALL_PLUGINS/get]/platforms/lib$${lib_name}$$qtPlatformTargetSuffix()
+-    LIBS += -l$${lib_name}$$qtPlatformTargetSuffix() $$fromfile($${lib_path_and_base}.prl, QMAKE_PRL_LIBS)
++    LIBS += -l$${lib_name}$$qtPlatformTargetSuffix()
+ 
+     !bitcode {
+         # By marking qt_registerPlatformPlugin as undefined, we ensure that
+diff --git a/qtbase/src/plugins/platforms/ios/ios.pro b/qtbase/src/plugins/platforms/ios/ios.pro
+index 594ccefcf1..6bbf3912c4 100644
+--- a/qtbase/src/plugins/platforms/ios/ios.pro
++++ b/qtbase/src/plugins/platforms/ios/ios.pro
+@@ -1,2 +1,2 @@
+TEMPLATE = subdirs
+-SUBDIRS = kernel.pro optional
++SUBDIRS = kernel.pro
+diff --git a/qtbase/src/plugins/platforms/ios/kernel.pro b/qtbase/src/plugins/platforms/ios/kernel.pro
+index 54069bee06..45e4e08377 100644
+--- a/qtbase/src/plugins/platforms/ios/kernel.pro
++++ b/qtbase/src/plugins/platforms/ios/kernel.pro
+@@ -1,15 +1,10 @@
+ TARGET = qios
+ 
+-# QTBUG-42937: Work around linker errors caused by circular
+-# dependencies between the iOS platform plugin and the user
+-# application's main() when the plugin is a shared library.
+-qtConfig(shared): CONFIG += static
+-
+ QT += \
+     core-private gui-private \
+     clipboard_support-private fontdatabase_support-private graphics_support-private
+diff --git a/qtbase/src/plugins/platforms/ios/plugin.mm b/qtbase/src/plugins/platforms/ios/plugin.mm
+index 83760f2f39..5637de9cd8 100644
+--- a/qtbase/src/plugins/platforms/ios/plugin.mm
++++ b/qtbase/src/plugins/platforms/ios/plugin.mm
+@@ -71,3 +71,9 @@
+extern "C" void qt_registerPlatformPlugin() {}
+
+Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
++
++const QT_PREPEND_NAMESPACE(QStaticPlugin) qt_static_plugin_QIOSIntegrationPlugin()
++{
++    QT_PREPEND_NAMESPACE(QStaticPlugin) plugin = {qt_plugin_instance, qt_plugin_query_metadata};
++    return plugin;
++}
+diff --git a/qtbase/src/plugins/platforms/ios/qioseventdispatcher.mm b/qtbase/src/plugins/platforms/ios/qioseventdispatcher.mm
+index c5856051de..d3fafb8dc4 100644
+--- a/qtbase/src/plugins/platforms/ios/qioseventdispatcher.mm
++++ b/qtbase/src/plugins/platforms/ios/qioseventdispatcher.mm
+@@ -213,8 +213,10 @@ void printUsage()
+ 
+ using namespace QT_PREPEND_NAMESPACE(QtPrivate);
+ 
+-extern "C" int qt_main_wrapper(int argc, char *argv[])
++int (*main_ptr)(int, char **) = 0;
++Q_EXTERN_C Q_DECL_EXPORT int qt_main_wrapper(int argc, char *argv[], int (*real_main_ptr)(int, char **))
+ {
++    main_ptr = real_main_ptr;
+     @autoreleasepool {
+         size_t defaultStackSize = 512 * kBytesPerKiloByte; // Same as secondary threads
+ 
+@@ -251,8 +253,6 @@ void printUsage()
+     kJumpedFromUserMainTrampoline,
+ };
+ 
+-extern "C" int main(int argc, char *argv[]);
+-
+ static void __attribute__((noinline, noreturn)) user_main_trampoline()
+ {
+     NSArray<NSString *> *arguments = [[NSProcessInfo processInfo] arguments];
+@@ -270,7 +270,7 @@ static void __attribute__((noinline, noreturn)) user_main_trampoline()
+             qFatal("Could not convert argv[%d] to C string", i);
+     }
+ 
+-    int exitCode = main(argc, argv);
++    int exitCode = main_ptr(argc, argv);
+     delete[] argv;
+ 
+     logActivity.applicationDidFinishLaunching.enter();
