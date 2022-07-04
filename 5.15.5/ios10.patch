@@ -1,0 +1,186 @@
+diff --git a/qtbase/mkspecs/features/toolchain.prf b/qtbase/mkspecs/features/toolchain.prf
+index 11ecd6b2a5..7ac4c4e624 100644
+--- a/qtbase/mkspecs/features/toolchain.prf
++++ b/qtbase/mkspecs/features/toolchain.prf
+@@ -184,7 +184,9 @@ isEmpty($${target_prefix}.INCDIRS) {
+         darwin {
+             # Clang doesn't pick up the architecture from the sysroot, and will
+             # default to the host architecture, so we need to manually set it.
+-            cxx_flags += -arch $$QMAKE_APPLE_DEVICE_ARCHS
++            for (arch, $$list($$QMAKE_APPLE_DEVICE_ARCHS)) {
++                cxx_flags += -arch $$arch
++            }
+ 
+             uikit:macx-xcode: \
+                 cxx_flags += -isysroot $$sdk_path_device.value
+@@ -197,7 +199,7 @@ isEmpty($${target_prefix}.INCDIRS) {
+             cxx_flags += $$QMAKE_LFLAGS_SHLIB -o $$QMAKE_SYSTEM_NULL_DEVICE -v
+         else: darwin:clang: \
+             # Need to link to pick up library paths
+-            cxx_flags += -g0 $$QMAKE_LFLAGS_SHLIB -o /dev/null -v -Wl,-v
++            cxx_flags += -g0 $$QMAKE_LFLAGS_SHLIB -o test -v -Wl,-v
+         else: \
+             # Just preprocess, might not pick up library paths
+             cxx_flags += -E -v
+diff --git a/qtbase/mkspecs/macx-ios-clang/qmake.conf b/qtbase/mkspecs/macx-ios-clang/qmake.conf
+index b164d44d9f..d5e92df724 100644
+--- a/qtbase/mkspecs/macx-ios-clang/qmake.conf
++++ b/qtbase/mkspecs/macx-ios-clang/qmake.conf
+@@ -2,12 +2,12 @@
+ # qmake configuration for macx-ios-clang
+ #
+ 
+-QMAKE_IOS_DEPLOYMENT_TARGET = 12.0
++QMAKE_IOS_DEPLOYMENT_TARGET = 10.0
+ 
+ # Universal target (iPhone and iPad)
+ QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2
+ 
+-QMAKE_APPLE_DEVICE_ARCHS = arm64
++QMAKE_APPLE_DEVICE_ARCHS = armv7 arm64
+ QMAKE_APPLE_SIMULATOR_ARCHS = x86_64
+ 
+ include(../common/ios.conf)
+diff --git a/qtbase/src/gui/rhi/qrhimetal.mm b/qtbase/src/gui/rhi/qrhimetal.mm
+index 5fe18c9827..75256e8f9c 100644
+--- a/qtbase/src/gui/rhi/qrhimetal.mm
++++ b/qtbase/src/gui/rhi/qrhimetal.mm
+@@ -3125,13 +3125,21 @@ static inline MTLBlendFactor toMetalBlendFactor(QRhiGraphicsPipeline::BlendFacto
+     case QRhiGraphicsPipeline::SrcAlphaSaturate:
+         return MTLBlendFactorSourceAlphaSaturated;
+     case QRhiGraphicsPipeline::Src1Color:
+-        return MTLBlendFactorSource1Color;
++        if (@available(iOS 11, *))
++            return MTLBlendFactorSource1Color;
++        return MTLBlendFactorSourceColor;
+     case QRhiGraphicsPipeline::OneMinusSrc1Color:
+-        return MTLBlendFactorOneMinusSource1Color;
++        if (@available(iOS 11, *))
++            return MTLBlendFactorOneMinusSource1Color;
++        return MTLBlendFactorOneMinusSourceColor;
+     case QRhiGraphicsPipeline::Src1Alpha:
+-        return MTLBlendFactorSource1Alpha;
++        if (@available(iOS 11, *))
++            return MTLBlendFactorSource1Alpha;
++        return MTLBlendFactorSourceAlpha;
+     case QRhiGraphicsPipeline::OneMinusSrc1Alpha:
+-        return MTLBlendFactorOneMinusSource1Alpha;
++        if (@available(iOS 11, *))
++            return MTLBlendFactorOneMinusSource1Alpha;
++        return MTLBlendFactorOneMinusSourceAlpha;
+     default:
+         Q_UNREACHABLE();
+         return MTLBlendFactorZero;
+@@ -3295,7 +3307,10 @@ static inline MTLCullMode toMetalCullMode(QRhiGraphicsPipeline::CullMode c)
+ 
+     NSString *src = [NSString stringWithUTF8String: mslSource.shader().constData()];
+     MTLCompileOptions *opts = [[MTLCompileOptions alloc] init];
+-    opts.languageVersion = key.sourceVersion() == 20 ? MTLLanguageVersion2_0 : MTLLanguageVersion1_2;
++    if (@available(iOS 11, *))
++        opts.languageVersion = key.sourceVersion() == 20 ? MTLLanguageVersion2_0 : MTLLanguageVersion1_2;
++    else
++        opts.languageVersion = MTLLanguageVersion1_2;
+     NSError *err = nil;
+     id<MTLLibrary> lib = [dev newLibraryWithSource: src options: opts error: &err];
+     [opts release];
+diff --git a/qtbase/src/platformsupport/clipboard/clipboard.pro b/qtbase/src/platformsupport/clipboard/clipboard.pro
+index 916f6b0c06..a8cc60892f 100644
+--- a/qtbase/src/platformsupport/clipboard/clipboard.pro
++++ b/qtbase/src/platformsupport/clipboard/clipboard.pro
+@@ -11,5 +11,6 @@ SOURCES += qmacmime.mm
+ 
+ LIBS += -framework ImageIO
+ macos: LIBS_PRIVATE += -framework AppKit
++ios: LIBS += -framework MobileCoreServices
+ 
+ load(qt_module)
+diff --git a/qtbase/src/plugins/platforms/ios/kernel.pro b/qtbase/src/plugins/platforms/ios/kernel.pro
+index 54069bee06..45e4e08377 100644
+--- a/qtbase/src/plugins/platforms/ios/kernel.pro
++++ b/qtbase/src/plugins/platforms/ios/kernel.pro
+@@ -9,7 +9,7 @@
+     core-private gui-private \
+     clipboard_support-private fontdatabase_support-private graphics_support-private
+ 
+-LIBS += -framework Foundation -framework UIKit -framework QuartzCore -framework AudioToolbox
++LIBS += -framework Foundation -framework UIKit -framework QuartzCore -framework AudioToolbox -framework MobileCoreServices
+ 
+ OBJECTIVE_SOURCES = \
+     plugin.mm \
+diff --git a/qtbase/src/plugins/platforms/ios/qiosdocumentpickercontroller.mm b/qtbase/src/plugins/platforms/ios/qiosdocumentpickercontroller.mm
+index c1b641e839..326282b4dd 100644
+--- a/qtbase/src/plugins/platforms/ios/qiosdocumentpickercontroller.mm
++++ b/qtbase/src/plugins/platforms/ios/qiosdocumentpickercontroller.mm
+@@ -73,8 +73,9 @@ - (instancetype)initWithQIOSFileDialog:(QIOSFileDialog *)fileDialog
+         self.modalPresentationStyle = UIModalPresentationFormSheet;
+         self.delegate = self;
+ 
+-        if (m_fileDialog->options()->fileMode() == QFileDialogOptions::ExistingFiles)
+-            self.allowsMultipleSelection = YES;
++        if (@available(iOS 11, *))
++            if (m_fileDialog->options()->fileMode() == QFileDialogOptions::ExistingFiles)
++                self.allowsMultipleSelection = YES;
+ 
+         if (@available(ios 13.0, *))
+             self.directoryURL = m_fileDialog->options()->initialDirectory().toNSURL();
+diff --git a/qtbase/src/plugins/platforms/ios/qiosscreen.mm b/qtbase/src/plugins/platforms/ios/qiosscreen.mm
+index a83d495043..77b2a6c893 100644
+--- a/qtbase/src/plugins/platforms/ios/qiosscreen.mm
++++ b/qtbase/src/plugins/platforms/ios/qiosscreen.mm
+@@ -471,7 +471,9 @@ static QString deviceModelIdentifier()
+ 
+ qreal QIOSScreen::refreshRate() const
+ {
+-    return m_uiScreen.maximumFramesPerSecond;
++    if (@available(iOS 10.3, *))
++        return m_uiScreen.maximumFramesPerSecond;
++    return 0.0;
+ }
+ 
+ Qt::ScreenOrientation QIOSScreen::nativeOrientation() const
+diff --git a/qtbase/src/plugins/platforms/ios/quiview.mm b/qtbase/src/plugins/platforms/ios/quiview.mm
+index 6ff495a..abca761 100644
+--- a/qtbase/src/plugins/platforms/ios/quiview.mm
++++ b/qtbase/src/plugins/platforms/ios/quiview.mm
+@@ -50,6 +50,8 @@
+ #include "qiosmenu.h"
+ #endif
+
++#include <QtCore/private/qcore_mac_p.h>
++
+ #include <QtGui/private/qguiapplication_p.h>
+ #include <QtGui/private/qwindow_p.h>
+ #include <qpa/qwindowsysteminterface_p.h>
+@@ -137,10 +139,17 @@ - (instancetype)initWithFrame:(CGRect)frame
+             [self addSubview:safeAreaOverlay];
+
+             safeAreaOverlay.translatesAutoresizingMaskIntoConstraints = NO;
+-            [safeAreaOverlay.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor].active = YES;
+-            [safeAreaOverlay.leftAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leftAnchor].active = YES;
+-            [safeAreaOverlay.rightAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.rightAnchor].active = YES;
+-            [safeAreaOverlay.bottomAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.bottomAnchor].active = YES;
++            if (@available(iOS 11, *)) {
++                [safeAreaOverlay.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor].active = YES;
++                [safeAreaOverlay.leftAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leftAnchor].active = YES;
++                [safeAreaOverlay.rightAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.rightAnchor].active = YES;
++                [safeAreaOverlay.bottomAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.bottomAnchor].active = YES;
++            } else {
++                [safeAreaOverlay.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;
++                [safeAreaOverlay.leftAnchor constraintEqualToAnchor:self.leftAnchor].active = YES;
++                [safeAreaOverlay.rightAnchor constraintEqualToAnchor:self.rightAnchor].active = YES;
++                [safeAreaOverlay.bottomAnchor constraintEqualToAnchor:self.bottomAnchor].active = YES;
++            }
+         }
+     }
+
+@@ -700,7 +709,9 @@ - (QIOSViewController*)qtViewController
+
+ - (UIEdgeInsets)qt_safeAreaInsets
+ {
+-    return self.safeAreaInsets;
++    if (@available(iOS 11, *))
++        return self.safeAreaInsets;
++    return UIEdgeInsetsMake(CGRectGetMaxY(qt_apple_sharedApplication().statusBarFrame), 0, 0, 0);
+ }
+
+ @end

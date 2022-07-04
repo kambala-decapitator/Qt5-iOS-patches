@@ -1,0 +1,13 @@
+diff --git a/qtbase/qmake/generators/unix/unixmake2.cpp b/qtbase/qmake/generators/unix/unixmake2.cpp
+index ad6a0e9..956b05e 100644
+--- a/qtbase/qmake/generators/unix/unixmake2.cpp
++++ b/qtbase/qmake/generators/unix/unixmake2.cpp
+@@ -792,7 +792,7 @@ UnixMakefileGenerator::writeMakeParts(QTextStream &t)
+             commonSedArgs << "-e \"s,\\$${MACOSX_DEPLOYMENT_TARGET},"
+                           << project->first("QMAKE_MACOSX_DEPLOYMENT_TARGET").toQString() << ",g\" ";
+             commonSedArgs << "-e \"s,\\$${IPHONEOS_DEPLOYMENT_TARGET},"
+-                          << project->first("QMAKE_IPHONEOS_DEPLOYMENT_TARGET").toQString() << ",g\" ";
++                          << project->first("QMAKE_IOS_DEPLOYMENT_TARGET").toQString() << ",g\" ";
+             commonSedArgs << "-e \"s,\\$${TVOS_DEPLOYMENT_TARGET},"
+                           << project->first("QMAKE_TVOS_DEPLOYMENT_TARGET").toQString() << ",g\" ";
+             commonSedArgs << "-e \"s,\\$${WATCHOS_DEPLOYMENT_TARGET},"
