@@ -19,9 +19,11 @@ To apply them:
 ```bash
 # set variable to point to this repo, example:
 # qt5PatchesRepo=~/Downloads/Qt5-iOS-patches
+cd qtbase
 for f in "$qt5PatchesRepo"/5.15.5/kde-patches/* ; do
   patch -p1 < "$f"
 done
+cd ..
 ```
 
 ## iOS
