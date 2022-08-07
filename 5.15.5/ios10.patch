@@ -2,18 +2,20 @@ diff --git a/qtbase/mkspecs/features/toolchain.prf b/qtbase/mkspecs/features/too
 index 11ecd6b2a5..7ac4c4e624 100644
 --- a/qtbase/mkspecs/features/toolchain.prf
 +++ b/qtbase/mkspecs/features/toolchain.prf
-@@ -184,7 +184,9 @@ isEmpty($${target_prefix}.INCDIRS) {
+@@ -184,7 +184,11 @@ isEmpty($${target_prefix}.INCDIRS) {
          darwin {
              # Clang doesn't pick up the architecture from the sysroot, and will
              # default to the host architecture, so we need to manually set it.
 -            cxx_flags += -arch $$QMAKE_APPLE_DEVICE_ARCHS
-+            for (arch, $$list($$QMAKE_APPLE_DEVICE_ARCHS)) {
++            simulator: appleArchs = $$QMAKE_APPLE_SIMULATOR_ARCHS
++            else:      appleArchs = $$QMAKE_APPLE_DEVICE_ARCHS
++            for (arch, $$list($$appleArchs)) {
 +                cxx_flags += -arch $$arch
 +            }
  
              uikit:macx-xcode: \
                  cxx_flags += -isysroot $$sdk_path_device.value
-@@ -197,7 +199,7 @@ isEmpty($${target_prefix}.INCDIRS) {
+@@ -197,7 +201,7 @@ isEmpty($${target_prefix}.INCDIRS) {
              cxx_flags += $$QMAKE_LFLAGS_SHLIB -o $$QMAKE_SYSTEM_NULL_DEVICE -v
          else: darwin:clang: \
              # Need to link to pick up library paths
