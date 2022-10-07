@@ -1,7 +1,7 @@
-From 7aadd884f0514c1136795160f31c93ba33f7a795 Mon Sep 17 00:00:00 2001
+From eb064f34a5c527897fba8cea7d67d4ffa7c980a2 Mon Sep 17 00:00:00 2001
 From: Andrey Butirsky <butirsky@gmail.com>
 Date: Wed, 24 Mar 2021 02:03:36 +0300
-Subject: [PATCH 010/163] Fix no mapping for SysReq key
+Subject: [PATCH 010/179] Fix no mapping for SysReq key
 
 XKB_KEY_Sys_Req keysym is currently unmapped to any Qt::Key.
 Implication of this it is uncapable to participate in any keyboard
