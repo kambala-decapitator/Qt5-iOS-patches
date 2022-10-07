@@ -1,6 +1,6 @@
 # Patches for Qt 5
 
-Various iOS and Android patches for Qt 5. They have been tested with Qt versions 5.15.4 and 5.15.5.
+Various iOS and Android patches for Qt 5. They have been tested with Qt versions 5.15.4-5.15.6.
 
 To apply the patches:
 
@@ -10,9 +10,9 @@ To apply the patches:
 
 ## General patches from [KDE project](https://community.kde.org/Qt5PatchCollection)
 
-They were generated on 20.06.2022 using command:
+They were generated on 07.10.2022 using command:
 
-    git format-patch v5.15.5-lts-lgpl..origin/kde/5.15
+    git format-patch v5.15.6-lts-lgpl..origin/kde/5.15
 
 To apply them:
 
