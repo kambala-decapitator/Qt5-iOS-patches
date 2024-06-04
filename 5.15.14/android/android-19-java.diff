@@ -1,0 +1,13 @@
+diff --git a/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java b/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java
+index 1e72aa3..982d060 100644
+--- a/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java
++++ b/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java
+@@ -182,7 +182,7 @@ public abstract class QtLoader {
+     }
+     // Implement in subclass
+ 
+-    private final List<String> supportedAbis = Arrays.asList(Build.SUPPORTED_ABIS);
++    private final List<String> supportedAbis = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? Arrays.asList(Build.SUPPORTED_ABIS) : List.of(Build.CPU_ABI);
+     private String preferredAbi = null;
+ 
+     private ArrayList<String> prefferedAbiLibs(String []libs)
