@@ -1,0 +1,84 @@
+diff --git a/src/android/jar/src/org/qtproject/qt5/android/QtActivityDelegate.java b/src/android/jar/src/org/qtproject/qt5/android/QtActivityDelegate.java
+index 1218164..a5bd6c5 100644
+--- a/src/android/jar/src/org/qtproject/qt5/android/QtActivityDelegate.java
++++ b/src/android/jar/src/org/qtproject/qt5/android/QtActivityDelegate.java
+@@ -847,7 +847,10 @@ public class QtActivityDelegate
+                 m_splashScreenSticky = info.metaData.containsKey("android.app.splash_screen_sticky") && info.metaData.getBoolean("android.app.splash_screen_sticky");
+                 int id = info.metaData.getInt(splashScreenKey);
+                 m_splashScreen = new ImageView(m_activity);
+-                m_splashScreen.setImageDrawable(m_activity.getResources().getDrawable(id, m_activity.getTheme()));
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
++                    m_splashScreen.setImageDrawable(m_activity.getResources().getDrawable(id, m_activity.getTheme()));
++                else
++                    m_splashScreen.setImageDrawable(m_activity.getResources().getDrawable(id));
+                 m_splashScreen.setScaleType(ImageView.ScaleType.FIT_XY);
+                 m_splashScreen.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                 m_layout.addView(m_splashScreen);
+@@ -1293,7 +1296,10 @@ public class QtActivityDelegate
+             if (attr.type >= TypedValue.TYPE_FIRST_COLOR_INT && attr.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+                 m_activity.getWindow().setBackgroundDrawable(new ColorDrawable(attr.data));
+             } else {
+-                m_activity.getWindow().setBackgroundDrawable(m_activity.getResources().getDrawable(attr.resourceId, m_activity.getTheme()));
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
++                    m_activity.getWindow().setBackgroundDrawable(m_activity.getResources().getDrawable(attr.resourceId, m_activity.getTheme()));
++                else
++                    m_activity.getWindow().setBackgroundDrawable(m_activity.getResources().getDrawable(attr.resourceId));
+             }
+             if (m_dummyView != null) {
+                 m_layout.removeView(m_dummyView);
+diff --git a/src/android/jar/src/org/qtproject/qt5/android/QtMessageDialogHelper.java b/src/android/jar/src/org/qtproject/qt5/android/QtMessageDialogHelper.java
+index e84c5d7..a3bbff4 100644
+--- a/src/android/jar/src/org/qtproject/qt5/android/QtMessageDialogHelper.java
++++ b/src/android/jar/src/org/qtproject/qt5/android/QtMessageDialogHelper.java
+@@ -109,8 +109,7 @@ public class QtMessageDialogHelper
+         try {
+             TypedValue typedValue = new TypedValue();
+             m_theme.resolveAttribute(android.R.attr.alertDialogIcon, typedValue, true);
+-            return m_activity.getResources().getDrawable(typedValue.resourceId,
+-                                                         m_activity.getTheme());
++            return m_activity.getResources().getDrawable(typedValue.resourceId);
+         } catch (Exception e) {
+             e.printStackTrace();
+         }
+@@ -120,8 +119,7 @@ public class QtMessageDialogHelper
+         {
+             case 1: // Information
+                 try {
+-                    return m_activity.getResources().getDrawable(android.R.drawable.ic_dialog_info,
+-                                                                 m_activity.getTheme());
++                    return m_activity.getResources().getDrawable(android.R.drawable.ic_dialog_info);
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                 }
+@@ -135,16 +133,14 @@ public class QtMessageDialogHelper
+ //                break;
+             case 3: // Critical
+                 try {
+-                    return m_activity.getResources().getDrawable(android.R.drawable.ic_dialog_alert,
+-                                                                 m_activity.getTheme());
++                    return m_activity.getResources().getDrawable(android.R.drawable.ic_dialog_alert);
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                 }
+                 break;
+             case 4: // Question
+                 try {
+-                    return m_activity.getResources().getDrawable(android.R.drawable.ic_menu_help,
+-                                                                 m_activity.getTheme());
++                    return m_activity.getResources().getDrawable(android.R.drawable.ic_menu_help);
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                 }
+diff --git a/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java b/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java
+index 1e72aa3..982d060 100644
+--- a/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java
++++ b/src/android/java/src/org/qtproject/qt5/android/bindings/QtLoader.java
+@@ -182,7 +182,7 @@ public abstract class QtLoader {
+     }
+     // Implement in subclass
+ 
+-    private final List<String> supportedAbis = Arrays.asList(Build.SUPPORTED_ABIS);
++    private final List<String> supportedAbis = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? Arrays.asList(Build.SUPPORTED_ABIS) : List.of(Build.CPU_ABI);
+     private String preferredAbi = null;
+ 
+     private ArrayList<String> prefferedAbiLibs(String []libs)
